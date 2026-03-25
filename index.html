@@ -17,7 +17,7 @@ html, body {
 #game-container {
 	position: absolute;
 	top: 50%; left: 50%;
-	transform: translate(-50%, -50%);
+	transform-origin: center center;
 	overflow: hidden;
 	box-shadow: 0 0 40px rgba(0,0,0,0.8);
 	border-radius: 12px;
@@ -25,28 +25,21 @@ html, body {
 
 #canvas {
 	display: block;
-	width: 100%;
-	height: 100%;
 	image-rendering: auto;
 }
 #canvas:focus { outline: none; }
 
 #status, #status-splash, #status-progress { position: absolute; left: 0; right: 0; }
 #status, #status-splash { top: 0; bottom: 0; }
-
 #status {
 	background-color: #1a1a2e;
 	display: flex; flex-direction: column; justify-content: center; align-items: center;
 	visibility: hidden;
 }
-
-#status-splash {
-	max-height: 100%; max-width: 100%; margin: auto;
-}
+#status-splash { max-height: 100%; max-width: 100%; margin: auto; }
 #status-splash.show-image--false { display: none; }
 #status-splash.fullsize--true { height: 100%; width: 100%; object-fit: contain; }
 #status-splash.use-filter--false { image-rendering: pixelated; }
-
 #status-progress, #status-notice { display: none; }
 #status-progress { bottom: 10%; width: 50%; margin: 0 auto; }
 #status-notice {
@@ -60,7 +53,7 @@ html, body {
 	</head>
 	<body>
 		<div id="game-container">
-			<canvas id="canvas">
+			<canvas id="canvas" width="1080" height="1920">
 				Your browser does not support the canvas tag.
 			</canvas>
 		</div>
@@ -75,7 +68,7 @@ html, body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":4949600,"index.wasm":37685705},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":4949600,"index.wasm":37685705},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -83,32 +76,23 @@ function resizeGame() {
 	var container = document.getElementById('game-container');
 	var W = window.innerWidth;
 	var H = window.innerHeight;
-	var targetRatio = 9 / 16;
-	var screenRatio = W / H;
-	var w, h;
 
-	if (screenRatio < targetRatio) {
-		w = W;
-		h = W / targetRatio;
-	} else {
-		h = H;
-		w = h * targetRatio;
-	}
+	// Game is designed for 1080x1920 (9:16)
+	var gameW = 1080;
+	var gameH = 1920;
+	var targetRatio = gameW / gameH; // 0.5625
 
-	w = Math.round(w);
-	h = Math.round(h);
-	container.style.width = w + 'px';
-	container.style.height = h + 'px';
+	// Calculate scale to fit in window
+	var scaleX = W / gameW;
+	var scaleY = H / gameH;
+	var scale = Math.min(scaleX, scaleY);
 
-	// Sync canvas internal resolution to match container (prevents stretch distortion)
-	var canvas = document.getElementById('canvas');
-	if (canvas) {
-		var dpr = window.devicePixelRatio || 1;
-		canvas.width = Math.round(w * dpr);
-		canvas.height = Math.round(h * dpr);
-	}
+	// Container stays at game resolution, CSS transform scales it
+	container.style.width = gameW + 'px';
+	container.style.height = gameH + 'px';
+	container.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
 
-	if (screenRatio < targetRatio) {
+	if (W / H < targetRatio) {
 		container.style.borderRadius = '0';
 		container.style.boxShadow = 'none';
 	} else {
