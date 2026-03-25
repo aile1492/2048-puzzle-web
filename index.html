@@ -2,121 +2,118 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
 		<title>2048 Puzzle</title>
 		<style>
-html, body {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	height: 100%;
-	width: 100%;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
-	color: white;
+html, body {
+	width: 100%; height: 100%;
 	background-color: #1a1a2e;
 	overflow: hidden;
 	touch-action: none;
-	display: flex;
-	justify-content: center;
-	align-items: center;
+}
+
+#game-container {
+	position: absolute;
+	top: 50%; left: 50%;
+	transform: translate(-50%, -50%);
+	overflow: hidden;
+	box-shadow: 0 0 40px rgba(0,0,0,0.8);
+	border-radius: 12px;
 }
 
 #canvas {
 	display: block;
-	height: 100vh;
-	width: calc(100vh * 9 / 16);
-	max-width: 100vw;
-	max-height: calc(100vw * 16 / 9);
+	width: 100%;
+	height: 100%;
+	image-rendering: auto;
 }
+#canvas:focus { outline: none; }
 
-#canvas:focus {
-	outline: none;
-}
-
-#status, #status-splash, #status-progress {
-	position: absolute;
-	left: 0;
-	right: 0;
-}
-
-#status, #status-splash {
-	top: 0;
-	bottom: 0;
-}
+#status, #status-splash, #status-progress { position: absolute; left: 0; right: 0; }
+#status, #status-splash { top: 0; bottom: 0; }
 
 #status {
-	background-color: #242424;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	visibility: hidden;
+	background-color: #1a1a2e;
+	display: flex; flex-direction: column; justify-content: center; align-items: center;
+	visibility: hidden; z-index: 10; border-radius: 12px;
 }
 
-#status-splash {
-	max-height: 100%;
-	max-width: 100%;
-	margin: auto;
-}
-
-#status-splash.show-image--false {
-	display: none;
-}
-
-#status-splash.fullsize--true {
-	height: 100%;
-	width: 100%;
-	object-fit: contain;
-}
-
-#status-splash.use-filter--false {
-	image-rendering: pixelated;
-}
-
-#status-progress, #status-notice {
-	display: none;
-}
+#status-splash { max-height: 100%; max-width: 100%; margin: auto; }
+#status-splash.show-image--false { display: none; }
+#status-splash.fullsize--true { height: 100%; width: 100%; object-fit: contain; }
+#status-progress, #status-notice { display: none; }
 
 #status-progress {
-	bottom: 10%;
-	width: 50%;
-	margin: 0 auto;
+	bottom: 10%; width: 60%; margin: 0 auto; height: 8px;
+	border-radius: 4px; appearance: none; -webkit-appearance: none;
 }
+#status-progress::-webkit-progress-bar { background-color: rgba(255,255,255,0.1); border-radius: 4px; }
+#status-progress::-webkit-progress-value { background: linear-gradient(90deg, #edc22e, #e8825a); border-radius: 4px; }
 
 #status-notice {
-	background-color: #5b3943;
-	border-radius: 0.5rem;
-	border: 1px solid #9b3943;
-	color: #e0e0e0;
-	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
-	line-height: 1.3;
-	margin: 0 2rem;
-	overflow: hidden;
-	padding: 1rem;
-	text-align: center;
-	z-index: 1;
+	background-color: #5b3943; border-radius: 0.5rem; border: 1px solid #9b3943;
+	color: #e0e0e0; line-height: 1.3; margin: 0 2rem; padding: 1rem; text-align: center; z-index: 1;
+}
+
+#loading-text {
+	position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+	color: rgba(255,255,255,0.6); font-size: 14px; z-index: 11; white-space: nowrap;
+}
+
+#bg-info {
+	position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%);
+	color: rgba(255,255,255,0.15); font-size: 11px; text-align: center; pointer-events: none; z-index: 0;
 }
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
-<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
-
+		<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 	</head>
 	<body>
-		<canvas id="canvas">
-			Your browser does not support the canvas tag.
-		</canvas>
-
-		<noscript>
-			Your browser does not support JavaScript.
-		</noscript>
-
-		<div id="status">
-			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
-			<progress id="status-progress"></progress>
-			<div id="status-notice"></div>
+		<div id="game-container">
+			<canvas id="canvas" width="1080" height="1920">Your browser does not support the canvas tag.</canvas>
+			<noscript>Your browser does not support JavaScript.</noscript>
+			<div id="status">
+				<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+				<progress id="status-progress"></progress>
+				<div id="status-notice"></div>
+				<div id="loading-text">Loading 2048 Puzzle...</div>
+			</div>
 		</div>
+		<div id="bg-info">2048 Puzzle — Internal Test Build</div>
+
+		<script>
+function resizeGame() {
+	var container = document.getElementById('game-container');
+	var W = window.innerWidth;
+	var H = window.innerHeight;
+	var targetRatio = 9 / 16;
+	var screenRatio = W / H;
+	var w, h;
+
+	if (screenRatio < targetRatio) {
+		w = W;
+		h = W / targetRatio;
+	} else {
+		h = H * 0.96;
+		w = h * targetRatio;
+	}
+
+	container.style.width = Math.round(w) + 'px';
+	container.style.height = Math.round(h) + 'px';
+
+	if (screenRatio < targetRatio) {
+		container.style.borderRadius = '0';
+		container.style.boxShadow = 'none';
+	} else {
+		container.style.borderRadius = '12px';
+		container.style.boxShadow = '0 0 40px rgba(0,0,0,0.8)';
+	}
+}
+window.addEventListener('resize', resizeGame);
+resizeGame();
+		</script>
 
 		<script src="index.js"></script>
 		<script>
@@ -125,19 +122,18 @@ const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
 (function () {
-	const statusOverlay = document.getElementById('status');
-	const statusProgress = document.getElementById('status-progress');
-	const statusNotice = document.getElementById('status-notice');
-
-	let initializing = true;
-	let statusMode = '';
+	var statusOverlay = document.getElementById('status');
+	var statusProgress = document.getElementById('status-progress');
+	var statusNotice = document.getElementById('status-notice');
+	var loadingText = document.getElementById('loading-text');
+	var initializing = true;
+	var statusMode = '';
 
 	function setStatusMode(mode) {
-		if (statusMode === mode || !initializing) {
-			return;
-		}
+		if (statusMode === mode || !initializing) return;
 		if (mode === 'hidden') {
 			statusOverlay.remove();
+			if (loadingText) loadingText.remove();
 			initializing = false;
 			return;
 		}
@@ -147,65 +143,25 @@ const engine = new Engine(GODOT_CONFIG);
 		statusMode = mode;
 	}
 
-	function setStatusNotice(text) {
-		while (statusNotice.lastChild) {
-			statusNotice.removeChild(statusNotice.lastChild);
-		}
-		const lines = text.split('\n');
-		lines.forEach((line) => {
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (loadingText) loadingText.remove();
+		var msg = 'An unknown error occurred.';
+		if (err instanceof Error) msg = err.message;
+		else if (typeof err === 'string') msg = err;
+		while (statusNotice.lastChild) statusNotice.removeChild(statusNotice.lastChild);
+		msg.split('\n').forEach(function(line) {
 			statusNotice.appendChild(document.createTextNode(line));
 			statusNotice.appendChild(document.createElement('br'));
 		});
-	}
-
-	function displayFailureNotice(err) {
-		console.error(err);
-		if (err instanceof Error) {
-			setStatusNotice(err.message);
-		} else if (typeof err === 'string') {
-			setStatusNotice(err);
-		} else {
-			setStatusNotice('An unknown error occurred.');
-		}
 		setStatusMode('notice');
 		initializing = false;
 	}
 
-	const missing = Engine.getMissingFeatures({
-		threads: GODOT_THREADS_ENABLED,
-	});
+	var missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
 
 	if (missing.length !== 0) {
-		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
-			let serviceWorkerRegistrationPromise;
-			try {
-				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
-			} catch (err) {
-				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
-			}
-			// There's a chance that installing the service worker would fix the issue
-			Promise.race([
-				serviceWorkerRegistrationPromise.then((registration) => {
-					if (registration != null) {
-						return Promise.reject(new Error('Service worker already exists.'));
-					}
-					return registration;
-				}).then(() => engine.installServiceWorker()),
-				// For some reason, `getRegistration()` can stall
-				new Promise((resolve) => {
-					setTimeout(() => resolve(), 2000);
-				}),
-			]).then(() => {
-				// Reload if there was no error.
-				window.location.reload();
-			}).catch((err) => {
-				console.error('Error while registering service worker:', err);
-			});
-		} else {
-			// Display the message as usual
-			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
-			displayFailureNotice(missingMsg + missing.join('\n'));
-		}
+		displayFailureNotice('Error\nThe following features required to run Godot projects on the Web are missing:\n' + missing.join('\n'));
 	} else {
 		setStatusMode('progress');
 		engine.startGame({
@@ -213,17 +169,16 @@ const engine = new Engine(GODOT_CONFIG);
 				if (current > 0 && total > 0) {
 					statusProgress.value = current;
 					statusProgress.max = total;
+					var pct = Math.round((current / total) * 100);
+					if (loadingText) loadingText.textContent = 'Loading 2048 Puzzle... ' + pct + '%';
 				} else {
 					statusProgress.removeAttribute('value');
 					statusProgress.removeAttribute('max');
 				}
 			},
-		}).then(() => {
-			setStatusMode('hidden');
-		}, displayFailureNotice);
+		}).then(function() { setStatusMode('hidden'); }, displayFailureNotice);
 	}
 }());
 		</script>
 	</body>
 </html>
-
