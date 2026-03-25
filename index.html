@@ -17,7 +17,7 @@ html, body {
 #game-container {
 	position: absolute;
 	top: 50%; left: 50%;
-	transform-origin: center center;
+	transform: translate(-50%, -50%);
 	overflow: hidden;
 	box-shadow: 0 0 40px rgba(0,0,0,0.8);
 	border-radius: 12px;
@@ -25,6 +25,8 @@ html, body {
 
 #canvas {
 	display: block;
+	width: 100%;
+	height: 100%;
 	image-rendering: auto;
 }
 #canvas:focus { outline: none; }
@@ -53,17 +55,13 @@ html, body {
 	</head>
 	<body>
 		<div id="game-container">
-			<canvas id="canvas" width="1080" height="1920">
-				Your browser does not support the canvas tag.
-			</canvas>
-		</div>
-
-		<noscript>Your browser does not support JavaScript.</noscript>
-
-		<div id="status">
-			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
-			<progress id="status-progress"></progress>
-			<div id="status-notice"></div>
+			<canvas id="canvas" width="1080" height="1920">Your browser does not support the canvas tag.</canvas>
+			<noscript>Your browser does not support JavaScript.</noscript>
+			<div id="status">
+				<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+				<progress id="status-progress"></progress>
+				<div id="status-notice"></div>
+			</div>
 		</div>
 
 		<script src="index.js"></script>
@@ -77,22 +75,22 @@ function resizeGame() {
 	var W = window.innerWidth;
 	var H = window.innerHeight;
 
-	// Game is designed for 1080x1920 (9:16)
-	var gameW = 1080;
-	var gameH = 1920;
-	var targetRatio = gameW / gameH; // 0.5625
+	var targetRatio = 9 / 16;
+	var screenRatio = W / H;
+	var w, h;
 
-	// Calculate scale to fit in window
-	var scaleX = W / gameW;
-	var scaleY = H / gameH;
-	var scale = Math.min(scaleX, scaleY);
+	if (screenRatio < targetRatio) {
+		w = W;
+		h = W / targetRatio;
+	} else {
+		h = H * 0.96;
+		w = h * targetRatio;
+	}
 
-	// Container stays at game resolution, CSS transform scales it
-	container.style.width = gameW + 'px';
-	container.style.height = gameH + 'px';
-	container.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+	container.style.width = Math.round(w) + 'px';
+	container.style.height = Math.round(h) + 'px';
 
-	if (W / H < targetRatio) {
+	if (screenRatio < targetRatio) {
 		container.style.borderRadius = '0';
 		container.style.boxShadow = 'none';
 	} else {
