@@ -95,8 +95,18 @@ function resizeGame() {
 		w = h * targetRatio;
 	}
 
-	container.style.width = Math.round(w) + 'px';
-	container.style.height = Math.round(h) + 'px';
+	w = Math.round(w);
+	h = Math.round(h);
+	container.style.width = w + 'px';
+	container.style.height = h + 'px';
+
+	// Sync canvas internal resolution to match container (prevents stretch distortion)
+	var canvas = document.getElementById('canvas');
+	if (canvas) {
+		var dpr = window.devicePixelRatio || 1;
+		canvas.width = Math.round(w * dpr);
+		canvas.height = Math.round(h * dpr);
+	}
 
 	if (screenRatio < targetRatio) {
 		container.style.borderRadius = '0';
